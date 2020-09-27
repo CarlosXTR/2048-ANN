@@ -21,6 +21,7 @@ class Game2048:
         self.grid_height = grid_height
         self.grid_width = grid_width
         self.score = 0
+        self.n_actions_space = len(OFFSETS)
 
         # Compute inital row dictionary to make move code cleaner
         self.initial = {
@@ -30,8 +31,6 @@ class Game2048:
             RIGHT: [[element, self.grid_width - 1]
                     for element in range(self.grid_height)]
         }
-
-        self.start()
 
     def start(self):
         self.table = np.zeros((self.grid_height, self.grid_width))
@@ -132,12 +131,24 @@ class Game2048:
             self.move_helper(initial_list, move,
                              temporary_list, self.grid_width)
 
+    def reset(self):
+        self.start()
+        return np.asarray(self.table).reshape(1,16)
+
+    def step(self, action):
+        prevous_score = self.score
+        self.move(action)
+        reward = self.score - prevous_score
+        new_state = np.asarray(self.table).reshape(1,16)
+
+        return new_state, reward**2, self.lost()
+
     def lost(self):
         gameover = True
         for i in range(self.grid_height):
             for j in range(self.grid_width):
                 val = self.table[i, j]
-                if val == 0 :
+                if val == 0:
                     gameover = False
                 if i > 0 and self.table[i - 1, j] == val:
                     gameover = False
@@ -165,6 +176,7 @@ class Game2048:
 if __name__ == "__main__":
 
     game = Game2048(4, 4)
+    game.start()
     game.print()
     while not game.lost():
         game.move(UP)
